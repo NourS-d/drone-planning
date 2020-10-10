@@ -93,6 +93,29 @@ class MotionPlanner:
     
     def euclidean_distance(self, p1, p2, w=1.0):
         return w*np.linalg.norm(np.array(p1)-np.array(p2))
+    
+    def prune_path(self, path):
+        """Returns the path pruned using collinearity check."""
+
+        pruned_path = path.copy()
+        i = 0
+        while i < len(pruned_path) - 2:
+            p0 = pruned_path[i]
+            p1 = pruned_path[i+1]
+            p2 = pruned_path[i+2]
+
+            if self._are_collinear(p0, p1, p2):
+                pruned_path.remove(pruned_path[i+1])
+            else:
+                i += 1
+        print(f"Pruned path length: {i+2}")
+        return pruned_path
+
+    def _are_collinear(self, p0, p1, p2, epsilon=1e-8):
+        x1, y1 = p1[0] - p0[0], p1[1] - p0[1]
+        x2, y2 = p2[0] - p0[0], p2[1] - p0[1]
+        return abs(x1 * y2 - x2 * y1) < epsilon
+
     @property
     def planner(self):
         return self._planner
@@ -124,8 +147,10 @@ if __name__ == "__main__":
 
     success, path, cost = mp.run_planner(start, goal)
     if success:
+        prune = np.array(mp.prune_path(path))
         path = np.array(path)
-        print(path)
+
         plt.matshow(grid)
         plt.plot(path[:, 1], path[:, 0], 'r')
+        plt.plot(prune[:, 1], prune[:, 0], '.b')
         plt.show()
