@@ -1,6 +1,7 @@
 from enum import Enum
 from numpy import sqrt
 
+
 class Actions(Enum):
 
     NORTH = (-1, 0, 1)
@@ -15,7 +16,7 @@ class Actions(Enum):
     @property
     def delta(self):
         return (self.value[0], self.value[1])
-        
+
     @property
     def cost(self):
         return self.value[2]
