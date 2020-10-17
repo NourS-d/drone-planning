@@ -20,3 +20,32 @@ class Actions(Enum):
     @property
     def cost(self):
         return self.value[2]
+
+    @staticmethod
+    def valid_grid_actions(grid, position):
+        """Returns a list a valid actions in a grid at a certain position."""
+        valid_actions = []
+        n, m = grid.shape
+        x, y = position
+
+        if x - 1 > 0:
+            if grid[x-1, y] == 0:
+                valid_actions.append(Actions.NORTH)
+            if y - 1 > 0 and grid[x-1, y-1] == 0:
+                valid_actions.append(Actions.NORTH_WEST)
+            if y + 1 < m and grid[x-1, y+1] == 0:
+                valid_actions.append(Actions.NORTH_EAST)
+        if x + 1 < n:
+            if grid[x+1, y] == 0:
+                valid_actions.append(Actions.SOUTH)
+            if y - 1 > 0 and grid[x+1, y-1] == 0:
+                valid_actions.append(Actions.SOUTH_WEST)
+            if y + 1 < m and grid[x+1, y+1] == 0:
+                valid_actions.append(Actions.SOUTH_EAST)
+
+        if y - 1 > 0 and grid[x, y-1] == 0:
+            valid_actions.append(Actions.WEST)
+        if y + 1 < m and grid[x, y+1] == 0:
+            valid_actions.append(Actions.EAST)
+
+        return valid_actions

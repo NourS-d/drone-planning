@@ -45,7 +45,8 @@ class MotionPlanner:
         open_set.put((0, start))
 
         came_from = {start: (0, None)}
-        visited = [start]
+        visited = set()
+        visited.add(start)
 
         while not open_set.empty():
             cost_current, current = open_set.get()
@@ -54,23 +55,21 @@ class MotionPlanner:
                 found = True
                 break
             else:
-                for action in self.motion_model:
+                for action in Actions.valid_grid_actions(self.grid, current):
                     new = tuple([current[i] + a for i, a
                                  in enumerate(action.delta)])
 
-                    if not self.is_valid_node(new):
-                        continue
                     cost_new = cost_current + \
                         action.cost + heuristic(new, goal)
                     if new not in visited:
-                        visited.append(new)
+                        visited.add(new)
                         open_set.put((cost_new, new))
                         came_from[new] = (cost_new, current)
         if found:
             # reconstruct path
             n = goal
             path_cost = came_from[n][0]
-            while n in tuple(came_from):
+            while n in came_from:
                 path.append(list(n))
                 n = came_from[n][1]
             print(f"Success! Path found with cost {path_cost}.")
@@ -82,10 +81,12 @@ class MotionPlanner:
     def is_valid_node(self, node):
         """Check if a node is safe."""
 
+        # Inside boundaries
         for i, v in enumerate(node):
             if not 0 <= v < self.grid.shape[i]:
                 return False
 
+        # Is marked as an obstacle
         if self.grid.item(*node):
             return False
 
@@ -133,7 +134,7 @@ class MotionPlanner:
 if __name__ == "__main__":
 
     # Generate random grid
-    GRID_SIDE = 100
+    GRID_SIDE = 1000
     OBSTACLES = int(0.2 * GRID_SIDE * GRID_SIDE)
     grid = np.zeros((GRID_SIDE**2))
     grid[:OBSTACLES] = 1
