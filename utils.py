@@ -35,4 +35,16 @@ def load_grid_from_csv(csv, drone_alt=10, inflation=3):
             ]
             grid[obstacle[0]:obstacle[1]+1, obstacle[2]:obstacle[3]+1] = 1
 
-    return grid
+    return grid, int(north_min), int(east_min)
+
+
+def get_random_point_from_grid(grid):
+    """Returns a random non-obstacle point on a 2D grid."""
+
+    n, m = grid.shape
+    x, y = np.random.randint(0, n), np.random.randint(0, m)
+
+    while grid[x, y] == 1:
+        x, y = np.random.randint(0, n), np.random.randint(0, m)
+
+    return (x, y)
