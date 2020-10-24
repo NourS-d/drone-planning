@@ -9,7 +9,7 @@ class States(IntEnum):
     MANUAL = auto()
     ARMED = auto()
     TAKEOFF = auto()
-    NAVIGATING = auto()
+    WAYPOINT = auto()
     LANDING = auto()
     DISARMED = auto()
 
@@ -22,11 +22,15 @@ class DroneControl(Drone):
                          tlog_directory=tlog_directory,
                          tlog_name=tlog_name)
 
+        self.in_mission = True
+
         # Initial State
         self.state = States.MANUAL
 
         self.target_position = np.zeros(3)
         self._takeoff_altitude = 3
+
+        self.waypoints = []
 
         self.register_callback(MsgID.LOCAL_POSITION,
                                self.local_position_callback)
@@ -62,7 +66,7 @@ class DroneControl(Drone):
         else:
             print("Drone can not arm right now. "
                   "Releasing control...")
-            self.release_control()
+            #self.release_control()
 
     def disarm_drone(self):
         """Sends a disarm command to the drone and releases control."""
@@ -81,6 +85,19 @@ class DroneControl(Drone):
         print("Landing drone...")
         super().land()
         self.state = States.LANDING
+    
+    def start_navigation(self):
+        if len(self.waypoints) == 0:
+            print("Waiting for waypoints.")
+        else:
+            print("Starting navigation.")
+            self.navigate_to_waypoint()
+
+    def navigate_to_waypoint(self):
+        self.state = States.WAYPOINT
+        self.target_position = self.waypoints.pop(0)
+        print("Target:", self.target_position)
+        self.cmd_position(*self.target_position)
 
     def state_callback(self):
         if self.state == States.MANUAL:
@@ -98,8 +115,14 @@ class DroneControl(Drone):
             if np.allclose(self.local_position[2],
                            self.target_position[2],
                            rtol=0.05, atol=0):
-                # Currently assuming safe to land
-                self.land()
+                self.start_navigation()
+        elif self.state == States.WAYPOINT:
+            if np.linalg.norm(self.target_position[0:2] - self.local_position[0:2]) < 1.0:
+                if len(self.waypoints) > 0:
+                    self.navigate_to_waypoint()
+                else:
+                    print("Reached last waypoint.")
+                    self.land()
 
     def velocity_callback(self):
         if self.state == States.LANDING:
